@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07060d">
+  <title>Before the Exam</title>
+  <meta name="description" content="A short cinematic message.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Kantumruy+Pro:wght@300;400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="stage" id="stage">
+    <canvas class="particles" id="particles" aria-hidden="true"></canvas>
+    <div class="glow" aria-hidden="true"></div>
+
+    <p class="message" id="message" aria-live="polite"></p>
+
+    <div class="finale" id="finale" aria-live="polite">
+      <div class="finale__orb" aria-hidden="true">
+        <span class="finale__ring"></span>
+        <span class="finale__ring"></span>
+        <span class="finale__ring"></span>
+      </div>
+      <p class="finale__text" id="finale-text"></p>
+    </div>
+
+    <button class="begin" id="begin" type="button" hidden>
+      <span class="begin__label">ចង់ដឹងចុចមក 👀</span>
+    </button>
+
+    <div class="vignette" aria-hidden="true"></div>
+  </main>
+
+  <noscript>
+    <p class="noscript">Please enable JavaScript to view this page.</p>
+  </noscript>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+/* ==========================================================================
+   Theme
+   ========================================================================== */
+
+:root {
+  --bg: #07060d;
+  --ink: #f4eee6;
+  --ink-soft: rgba(244, 238, 230, 0.72);
+  --accent-a: #7c5cff;   /* violet */
+  --accent-b: #ff7ab8;   /* rose   */
+  --accent-c: #4fd1ff;   /* cyan   */
+  --gold: #ffd9a0;
+
+  --font-display: "Cormorant Garamond", "Kantumruy Pro", "Noto Sans Khmer", "Khmer OS", Georgia, serif;
+
+  --ease-out: cubic-bezier(0.16, 0.84, 0.24, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Set from script.js so CSS and JS timings stay in sync */
+  --enter-ms: 1400ms;
+  --exit-ms: 1000ms;
+  --stagger-ms: 90ms;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ==========================================================================
+   Stage & atmosphere
+   ========================================================================== */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 90% at 50% 110%, #1a1033 0%, transparent 60%),
+    radial-gradient(90% 70% at 50% -10%, #0e1630 0%, transparent 65%),
+    var(--bg);
+}
+
+/* Slowly drifting colour washes */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: -2;
+  background:
+    radial-gradient(35% 30% at 30% 40%, color-mix(in srgb, var(--accent-a) 28%, transparent), transparent 70%),
+    radial-gradient(30% 28% at 70% 60%, color-mix(in srgb, var(--accent-b) 18%, transparent), transparent 70%),
+    radial-gradient(28% 26% at 55% 30%, color-mix(in srgb, var(--accent-c) 12%, transparent), transparent 70%);
+  filter: blur(40px);
+  animation: drift 28s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes drift {
+  0%   { transform: translate3d(-3%, 2%, 0) rotate(0deg) scale(1); }
+  50%  { transform: translate3d(3%, -2%, 0) rotate(8deg) scale(1.06); }
+  100% { transform: translate3d(-1%, -3%, 0) rotate(-6deg) scale(1.02); }
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+
+.is-started .particles {
+  opacity: 1;
+}
+
+/* Soft halo behind the text */
+.glow {
+  position: absolute;
+  width: min(80vw, 780px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 217, 160, 0.10) 0%, rgba(124, 92, 255, 0.08) 35%, transparent 70%);
+  filter: blur(20px);
+  z-index: -1;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 2.5s ease, transform 3s var(--ease-out);
+  pointer-events: none;
+}
+
+.is-started .glow {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.65) 100%);
+  z-index: 5;
+}
+
+/* ==========================================================================
+   Messages
+   ========================================================================== */
+
+.message {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-content: center;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    max(24px, 7vw, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(24px, 7vw, env(safe-area-inset-left));
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.9rem, 1.2rem + 3.4vw, 4.4rem);
+  line-height: 1.6; /* room for Khmer subscripts and vowel signs */
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+  z-index: 2;
+}
+
+.message__inner {
+  display: block;
+  max-width: 18ch;
+}
+
+@media (min-width: 900px) {
+  .message__inner {
+    max-width: 22ch;
+  }
+}
+
+.word {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 0.45em, 0) scale(0.96);
+  filter: blur(10px);
+  color: var(--ink);
+  text-shadow:
+    0 0 24px rgba(255, 217, 160, 0.22),
+    0 0 60px rgba(124, 92, 255, 0.18);
+  transition:
+    opacity var(--enter-ms) var(--ease-out),
+    transform var(--enter-ms) var(--ease-out),
+    filter var(--enter-ms) var(--ease-out);
+  transition-delay: calc(var(--i, 0) * var(--stagger-ms));
+  will-change: opacity, transform, filter;
+}
+
+.message.is-visible .word {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+.message.is-leaving .word {
+  opacity: 0;
+  transform: translate3d(0, -0.3em, 0) scale(1.03);
+  filter: blur(8px);
+  transition-duration: var(--exit-ms);
+  transition-timing-function: var(--ease-in-out);
+  transition-delay: calc(var(--i, 0) * (var(--stagger-ms) / 3));
+}
+
+/* ==========================================================================
+   Finale
+   ========================================================================== */
+
+.finale {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: clamp(28px, 5vh, 48px);
+  padding: 24px;
+  z-index: 3;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.is-ending .finale {
+  visibility: visible;
+}
+
+.finale__orb {
+  position: relative;
+  width: clamp(72px, 16vmin, 128px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 35%, #fff8ec 0%, var(--gold) 22%, var(--accent-b) 58%, var(--accent-a) 100%);
+  box-shadow:
+    0 0 40px 6px rgba(255, 217, 160, 0.45),
+    0 0 120px 30px rgba(255, 122, 184, 0.25),
+    0 0 260px 80px rgba(124, 92, 255, 0.18);
+  opacity: 0;
+  transform: scale(0);
+}
+
+.is-ending .finale__orb {
+  animation:
+    orb-bloom 2.4s var(--ease-out) forwards,
+    orb-breathe 5s var(--ease-in-out) 2.4s infinite;
+}
+
+@keyframes orb-bloom {
+  0%   { opacity: 0; transform: scale(0); filter: blur(12px); }
+  60%  { opacity: 1; transform: scale(1.18); filter: none; }
+  100% { opacity: 1; transform: scale(1); filter: none; }
+}
+
+@keyframes orb-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.07); }
+}
+
+.finale__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 217, 160, 0.55);
+  opacity: 0;
+}
+
+.is-ending .finale__ring {
+  animation: ripple 5.4s var(--ease-out) infinite;
+}
+
+.is-ending .finale__ring:nth-child(1) { animation-delay: 1.2s; }
+.is-ending .finale__ring:nth-child(2) { animation-delay: 3.0s; }
+.is-ending .finale__ring:nth-child(3) { animation-delay: 4.8s; }
+
+@keyframes ripple {
+  0%   { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(5.5); }
+}
+
+.finale__text {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.3rem, 0.9rem + 1.8vw, 2.2rem);
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  filter: blur(6px);
+}
+
+.is-ending .finale__text {
+  animation: rise 2s var(--ease-out) 1.6s forwards;
+}
+
+@keyframes rise {
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* ==========================================================================
+   Tap to Begin
+   ========================================================================== */
+
+.begin {
+  position: relative;
+  z-index: 10;
+  padding: 1.05em 2.4em;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 0.95rem + 0.7vw, 1.4rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 217, 160, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 0 0 rgba(255, 217, 160, 0.35), 0 0 40px rgba(124, 92, 255, 0.2);
+  animation:
+    begin-in 1.2s var(--ease-out) both,
+    begin-pulse 2.8s var(--ease-in-out) 1.2s infinite;
+  transition: background 0.3s ease, border-color 0.3s ease, opacity 0.8s ease, transform 0.8s var(--ease-out);
+}
+
+.begin[hidden] {
+  display: none;
+}
+
+.begin:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 217, 160, 0.6);
+}
+
+.begin:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 6px;
+}
+
+.begin.is-leaving {
+  opacity: 0;
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+@keyframes begin-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes begin-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 217, 160, 0.35), 0 0 40px rgba(124, 92, 255, 0.2); }
+  70%  { box-shadow: 0 0 0 18px rgba(255, 217, 160, 0), 0 0 40px rgba(124, 92, 255, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 217, 160, 0), 0 0 40px rgba(124, 92, 255, 0.2); }
+}
+
+.noscript {
+  position: fixed;
+  inset: auto 0 2rem;
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   Reduced motion: keep gentle fades, drop movement, blur and loops
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .stage::before {
+    animation: none;
+  }
+
+  .word,
+  .message.is-leaving .word {
+    transform: none;
+    filter: none;
+    transition-property: opacity;
+    transition-delay: 0ms;
+  }
+
+  .finale__orb {
+    transform: none;
+  }
+
+  .is-ending .finale__orb {
+    animation: fade-in 1.5s ease forwards;
+  }
+
+  .is-ending .finale__ring {
+    animation: none;
+  }
+
+  .finale__text {
+    transform: none;
+    filter: none;
+  }
+
+  .is-ending .finale__text {
+    animation: fade-in 1.5s ease 0.8s forwards;
+  }
+
+  .begin {
+    animation: fade-in 0.6s ease both;
+  }
+
+  .begin.is-leaving {
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; transform: none; }
+}
