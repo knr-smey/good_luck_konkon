@@ -52,10 +52,19 @@ body {
   display: grid;
   place-items: center;
   isolation: isolate;
+  background: var(--bg);
+}
+
+/* Background photo — blurred and dimmed so it never competes with the text */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: -8px; /* hide the soft edges the blur creates */
+  z-index: -3;
   background:
-    radial-gradient(120% 90% at 50% 110%, #1a1033 0%, transparent 60%),
-    radial-gradient(90% 70% at 50% -10%, #0e1630 0%, transparent 65%),
-    var(--bg);
+    linear-gradient(rgba(6, 8, 30, 0.55), rgba(6, 8, 30, 0.7)),
+    url("imge.jpg") center / cover no-repeat;
+  filter: blur(2px) saturate(1.1);
 }
 
 /* Slowly drifting colour washes */
@@ -140,7 +149,7 @@ body {
     max(24px, 7vw, env(safe-area-inset-left));
   text-align: center;
   font-family: var(--font-display);
-  font-weight: 300;
+  font-weight: 500;
   font-size: clamp(1.9rem, 1.2rem + 3.4vw, 4.4rem);
   line-height: 1.6; /* room for Khmer subscripts and vowel signs */
   letter-spacing: 0.005em;
@@ -148,9 +157,34 @@ body {
   z-index: 2;
 }
 
+/* Frosted-glass card behind each sentence */
 .message__inner {
   display: block;
   max-width: 18ch;
+  padding: 0.55em 0.9em;
+  border-radius: 28px;
+  background: rgba(10, 14, 48, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity calc(var(--enter-ms) * 0.6) var(--ease-out),
+    transform var(--enter-ms) var(--ease-out);
+}
+
+.message.is-visible .message__inner {
+  opacity: 1;
+  transform: none;
+}
+
+.message.is-leaving .message__inner {
+  opacity: 0;
+  transition-duration: var(--exit-ms);
 }
 
 @media (min-width: 900px) {
@@ -164,10 +198,10 @@ body {
   opacity: 0;
   transform: translate3d(0, 0.45em, 0) scale(0.96);
   filter: blur(10px);
-  color: var(--ink);
+  color: #fff;
   text-shadow:
-    0 0 24px rgba(255, 217, 160, 0.22),
-    0 0 60px rgba(124, 92, 255, 0.18);
+    0 2px 10px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(255, 214, 0, 0.18);
   transition:
     opacity var(--enter-ms) var(--ease-out),
     transform var(--enter-ms) var(--ease-out),
@@ -212,25 +246,31 @@ body {
   visibility: visible;
 }
 
+/* Fade the whole finale out before the sequence replays */
+.is-ending-out .finale {
+  opacity: 0;
+  transition: opacity var(--ending-fade-ms, 1500ms) ease;
+}
+
 .finale__orb {
   position: relative;
-  width: clamp(72px, 16vmin, 128px);
+  width: clamp(160px, 42vmin, 300px);
   aspect-ratio: 1;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 38% 35%, #fff8ec 0%, var(--gold) 22%, var(--accent-b) 58%, var(--accent-a) 100%);
+  /* Slightly oversized so the logo's white corners are clipped by the circle */
+  background: url("logo.png") center / 104% no-repeat #0b1a5c;
   box-shadow:
-    0 0 40px 6px rgba(255, 217, 160, 0.45),
-    0 0 120px 30px rgba(255, 122, 184, 0.25),
-    0 0 260px 80px rgba(124, 92, 255, 0.18);
+    0 0 40px 6px rgba(255, 214, 0, 0.35),
+    0 0 120px 30px rgba(40, 70, 220, 0.35),
+    0 0 260px 80px rgba(40, 70, 220, 0.2);
   opacity: 0;
   transform: scale(0);
 }
 
 .is-ending .finale__orb {
   animation:
-    orb-bloom 2.4s var(--ease-out) forwards,
-    orb-breathe 5s var(--ease-in-out) 2.4s infinite;
+    orb-bloom 1.2s var(--ease-out) forwards,
+    orb-breathe 5s var(--ease-in-out) 1.2s infinite;
 }
 
 @keyframes orb-bloom {
@@ -262,24 +302,32 @@ body {
 
 @keyframes ripple {
   0%   { opacity: 0.8; transform: scale(1); }
-  100% { opacity: 0; transform: scale(5.5); }
+  100% { opacity: 0; transform: scale(3); }
 }
 
 .finale__text {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: clamp(1.3rem, 0.9rem + 1.8vw, 2.2rem);
-  letter-spacing: 0.04em;
-  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 1.2rem + 2.6vw, 3rem);
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: #ffd600;
   text-align: center;
+  padding: 0.2em 1.1em;
+  border-radius: 999px;
+  background: rgba(10, 14, 48, 0.6);
+  border: 1px solid rgba(255, 214, 0, 0.35);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
   opacity: 0;
   transform: translateY(12px);
   filter: blur(6px);
 }
 
 .is-ending .finale__text {
-  animation: rise 2s var(--ease-out) 1.6s forwards;
+  animation: rise 0.8s var(--ease-out) 0.5s forwards;
 }
 
 @keyframes rise {
@@ -386,7 +434,7 @@ body {
   }
 
   .is-ending .finale__text {
-    animation: fade-in 1.5s ease 0.8s forwards;
+    animation: fade-in 0.6s ease 0.2s forwards;
   }
 
   .begin {

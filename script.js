@@ -7,14 +7,14 @@ const CONFIG = {
   audio: {
     src: "audio.mp3",
     volume: 0.8,      // 0 – 1
-    loop: true,
+    loop: true,       // after the logo, restart the song + messages together
     fadeInMs: 2500,   // gentle volume fade-in when playback starts
   },
 
   // The sentences, shown one after another (any number works).
   messages: [
     "សួស្ដី កូន ៗ 👋",
-    "ត្រៀមខ្លួនសម្រាប់ថ្ងៃស្អែក 📚",
+    "ត្រៀមខ្លួនហើយឬនៅ​​📚",
     "កំុសេដប្រើត្រូវ date ប្រាប់គេផង 💬",
     "ថាបងត្រូវប្រលងយក Top 💪",
     "ចាំចប់បងនាំអូនទៅ Buffe 🍣🍗🍰",
@@ -24,7 +24,7 @@ const CONFIG = {
   ],
 
   // Text shown under the glowing orb at the very end ("" to hide it).
-  endingText: "សំណាងល្អ 🍀❤️",
+  endingText: "សំណាងល្អ",
 
   // Timing, in milliseconds.
   timing: {
@@ -34,6 +34,8 @@ const CONFIG = {
     display: 3200,      // how long a sentence stays fully visible
     exit: 1000,         // fade-out duration
     gap: 500,           // pause between sentences
+    endingHold: 10000,  // how long the logo stays before the song + messages restart
+    endingFadeOut: 1500, // fade-out of the logo before replaying
     autoplayTimeout: 2500, // show "Tap to Begin" if audio hasn't started by then
   },
 };
@@ -61,14 +63,26 @@ const CONFIG = {
   root.style.setProperty("--enter-ms", `${timing.enter}ms`);
   root.style.setProperty("--exit-ms", `${timing.exit}ms`);
   root.style.setProperty("--stagger-ms", `${timing.stagger}ms`);
+  root.style.setProperty("--ending-fade-ms", `${timing.endingFadeOut}ms`);
 
   /* ---------- Audio ---------- */
 
   const audio = new Audio();
   audio.src = CONFIG.audio.src;
-  audio.loop = CONFIG.audio.loop;
+  audio.loop = true; // in case the song is shorter than the messages; playSequence() rewinds it each round
   audio.preload = "auto";
   audio.volume = 0;
+
+  function fadeOutAudio(duration) {
+    const from = audio.volume;
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(Math.max((now - start) / duration, 0), 1);
+      audio.volume = from * (1 - t);
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
 
   function fadeInAudio() {
     const target = Math.min(Math.max(CONFIG.audio.volume, 0), 1);
@@ -168,15 +182,34 @@ const CONFIG = {
   async function playSequence() {
     await wait(timing.startDelay);
 
-    for (const text of CONFIG.messages) {
-      await showMessage(text);
-      await wait(timing.gap);
-    }
+    // Replay forever: messages → logo → fade out (with the music) → song + messages again.
+    for (;;) {
+      for (const text of CONFIG.messages) {
+        await showMessage(text);
+        await wait(timing.gap);
+      }
 
-    finaleTextEl.textContent = CONFIG.endingText || "";
-    finaleTextEl.hidden = !CONFIG.endingText;
-    document.body.classList.add("is-ending");
-    particles.celebrate();
+      finaleTextEl.textContent = CONFIG.endingText || "";
+      finaleTextEl.hidden = !CONFIG.endingText;
+      document.body.classList.add("is-ending");
+      particles.celebrate();
+
+      await wait(timing.endingHold);
+      if (!CONFIG.audio.loop) return; // stay on the logo for good
+
+      const musicPlaying = !audio.paused && !audio.error;
+      document.body.classList.add("is-ending-out");
+      particles.calm();
+      if (musicPlaying) fadeOutAudio(timing.endingFadeOut);
+      await wait(timing.endingFadeOut);
+
+      document.body.classList.remove("is-ending", "is-ending-out");
+      if (musicPlaying) {
+        audio.currentTime = 0;
+        fadeInAudio();
+      }
+      await wait(timing.startDelay);
+    }
   }
 
   /* ---------- Particles ---------- */
@@ -287,6 +320,10 @@ const CONFIG = {
       requestAnimationFrame(ramp);
     }
 
+    function calm() {
+      burst = 0;
+    }
+
     let resizeTimer = 0;
     window.addEventListener("resize", () => {
       clearTimeout(resizeTimer);
@@ -298,7 +335,7 @@ const CONFIG = {
       start();
     });
 
-    return { start, celebrate };
+    return { start, celebrate, calm };
   })();
 
   /* ---------- Startup ---------- */
